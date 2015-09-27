@@ -41,7 +41,7 @@ print sum
 #create multiply Divide Node
 mult = pmc.createNode('multiplyDivide')
 pmc.setAttr(mult.operation,  2)
-pmc.setAttr(mult.input2X,  sum)
+pmc.setAttr(mult.input2X, sum)
 
 pmc.connectAttr(distanceBetween.distance, mult.input1X)
 
@@ -55,17 +55,21 @@ pmc.setAttr(clamp.maxR,  2.0)
 pmc.connectAttr(mult.outputX, clamp.inputR)
 
 for i in xrange (1, len(jointChain)):
-    if (jointChain[i] > endJoint):
-        break; 
-    else:
+    if (jointChain[i] <= endJoint):
         newMult = pmc.createNode('multiplyDivide')
         pmc.connectAttr(clamp.outputR, newMult.input1X)
         translateX_value = pmc.joint(jointChain[i], query = True, p = True, relative = True)[0]
         pmc.setAttr(newMult.input2X,translateX_value )
-        #pmc.connectAttr(newMult.outputX, string(jointChain[i]".translateX"))
+        pmc.connectAttr(newMult.outputX, jointChain[i].translateX)
         
-        newMult.outputX.connect(jointChain[i].translateX)
+       
 
+
+
+
+
+
+ 
 
 
 
