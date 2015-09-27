@@ -22,19 +22,22 @@ distanceBetween = pmc.shadingNode('distanceBetween',asUtility = True)
 
 pmc.connectAttr(shapeLocator1.worldPosition[0], distanceBetween.point1)
 pmc.connectAttr(shapeLocator2.worldPosition[0], distanceBetween.point2 )
-locatorShape1
 #selecting start joints 
 pmc.select(startJoint, hi = True)
 
 jointChain = pmc.ls(sl = True, type = 'joint' )
 sum = 0; 
 
-for jnt in xrange(1, len(jointChain)):
-    transX = pmc.joint(jointChain[jnt], query = True, p = True, relative = True)[0] 
-    sum+=transX
+for jnt in xrange(1, len(jointChain)):    
+    if (jointChain[jnt] <= endJoint):
+        transX = pmc.joint(jointChain[jnt], query = True, p = True, relative = True)[0] 
+        sum+=transX
+        print sum
 
-    print sum   
-    
+print sum
+
+   
+        
 #create multiply Divide Node
 mult = pmc.createNode('multiplyDivide')
 pmc.setAttr(mult.operation,  2)
