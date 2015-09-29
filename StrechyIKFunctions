@@ -1,0 +1,71 @@
+import pymel.core as pmc
+from itertools import izip
+
+ik = pmc.ls(sl=True, type = 'ikHandle')
+startJoint = pmc.ikHandle(query = True, sj= True)
+endEffector = pmc.ikHandle(query = True, ee = True)
+endJoint = pmc.listConnections(endEffector, type = 'joint')[0]
+pmc.select(startJoint, hi = True)
+jointChain = pmc.ls(sl = True, type = 'joint' )
+
+def connectNodes():
+    locator1 = pmc.spaceLocator()
+    locator2 = pmc.spaceLocator()
+    
+    shapeLocator1 = locator1.getShape()
+    shapeLocator2 = locator2.getShape()
+    
+    
+    pmc.pointConstraint(startJoint, locator1, mo = False)
+    pmc.pointConstraint(ik, locator2, mo = False)
+    distanceBetween = pmc.shadingNode('distanceBetween',asUtility = True)
+    
+    pmc.connectAttr(shapeLocator1.worldPosition[0], distanceBetween.point1)
+    pmc.connectAttr(shapeLocator2.worldPosition[0], distanceBetween.point2 )
+
+    #selecting start joints 
+    
+    sum = 0; 
+    
+    for jnt in xrange(1, len(jointChain)):    
+        if (jointChain[jnt] <= endJoint):
+            transX = pmc.joint(jointChain[jnt], query = True, p = True, relative = True)[0] 
+            sum+=transX
+            print sum
+    
+    print sum
+    
+       
+            
+    #create multiply Divide Node
+    mult = pmc.createNode('multiplyDivide')
+    pmc.setAttr(mult.operation,  2)
+    pmc.setAttr(mult.input2X, sum)
+    
+    pmc.connectAttr(distanceBetween.distance, mult.input1X)
+    
+    
+    #Clamp Node Time
+    clamp = pmc.createNode('clamp')
+    
+    pmc.setAttr(clamp.minR,  1.0)
+    pmc.setAttr(clamp.maxR,  2.0)
+    
+    pmc.connectAttr(mult.outputX, clamp.inputR)
+    
+    return clamp
+    
+def translate(clamp):
+    for i in xrange (1, len(jointChain)):
+        if (jointChain[i] <= endJoint):
+            newMult = pmc.createNode('multiplyDivide')
+            pmc.connectAttr(clamp.outputR, newMult.input1X)
+            translateX_value = pmc.joint(jointChain[i], query = True, p = True, relative = True)[0]
+            pmc.setAttr(newMult.input2X,translateX_value )
+            pmc.connectAttr(newMult.outputX, jointChain[i].translateX)
+
+
+clamp = connectNodes() 
+translate(clamp)
+
+
