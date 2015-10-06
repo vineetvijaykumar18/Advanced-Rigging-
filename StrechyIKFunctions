@@ -4,7 +4,7 @@ import maya.cmds as cmds
 
 
 
-
+'''
 
 def UI():
     
@@ -20,10 +20,11 @@ def UI():
     pmc.button(label = "Scale", command = "Scale()")
     
     pmc.showWindow()
-    
+'''    
     
 def Translate():
     ik = pmc.ls(sl=True, type = 'ikHandle')
+    namebase = ik.strip()[0]
     startJoint = pmc.ikHandle(query = True, sj= True)
     endEffector = pmc.ikHandle(query = True, ee = True)
     endJoint = pmc.listConnections(endEffector, type = 'joint')[0]
@@ -52,7 +53,7 @@ def Translate():
     for jnt in xrange(1, len(jointChain)):    
         if (jointChain[jnt] <= endJoint):
             transX = pmc.joint(jointChain[jnt], query = True, p = True, relative = True)[0] 
-            sum+=transX
+            sum+=abs(transX)
             print sum
     
     print sum
@@ -113,7 +114,7 @@ def Scale():
     for jnt in xrange(1, len(jointChain)):    
         if (jointChain[jnt] <= endJoint):
             transX = pmc.joint(jointChain[jnt], query = True, p = True, relative = True)[0] 
-            sum+=transX
+            sum+=abs(transX)
             print sum
     
     print sum
