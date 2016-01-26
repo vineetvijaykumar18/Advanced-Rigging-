@@ -1,0 +1,122 @@
+'''
+1. Make Sure you select you control skelton, and then run the script.
+2. Duplicate your skeleton first with the duplicate button.
+3. Then hit the connect/disconnect button
+4. Bind pose will return mesh to the original dag pose.
+Important:
+1. All control skeleton joints should be named with prefix control_
+before you start duplicating
+2. End joints must have a suffix of End.
+'''
+
+
+import pymel.core as pmc
+from itertools import izip
+
+
+#setting prefixes 
+rig_prefix = "control_"
+bind_prefix = "bind_"
+
+#Getting the control root joint
+control_root = pmc.ls(sl=True, type = 'joint')[0]
+
+
+def UI():
+    
+    if (pmc.window("Skeleton Coupler", exists=True)):
+        pmc.deleteUI("Skeleton Coupler")
+    
+    pmc.window(title='Skeleton Coupler')
+    
+    
+    
+    frame = cmds.columnLayout(adjustableColumn = True)
+    pmc.button(label = "Duplicate", c = "duplicateSelected()")
+    pmc.button(label = "Connect", c = "connectSkeleton()")
+    
+    pmc.button(label = "Disconnect", c = "setupRemoveConnections()")
+    
+    
+    pmc.showWindow()
+    
+
+def duplicateSelected():
+    
+    #checking to see if the user has already pressed the duplicate button and created a duplicate object
+    if pmc.objExists(control_root.replace(rig_prefix,bind_prefix)) == True:
+       pmc.confirmDialog( title='Error', message='Duplicate Already Made')
+        
+        #connectSkeleton()
+    else:
+        bind_root = pmc.duplicate(control_root)[0]
+        bind_skeleton = pmc.listRelatives(bind_root, type = 'joint', ad = True)
+        
+        
+        
+        pmc.rename(bind_root,control_root.replace(rig_prefix, bind_prefix))
+        
+        for jnt in bind_skeleton:
+            pmc.rename(jnt,jnt.replace(rig_prefix, bind_prefix))
+            
+        bind_skeleton.append(bind_root)
+        
+        pmc.select(bind_skeleton, hi = True)
+        bind = pmc.ls(sl = True)
+        
+        for i in bind:
+            if pmc.objectType(i, isType = 'joint') == 0:
+                pmc.delete(i)
+        
+        
+
+       
+       #creating and saving out the bind pose 
+        pmc.select(bind_root,hi = True)
+        
+        if pmc.objExists('myPose') == True:
+            pmc.delete('myPose')
+            
+         
+        pmc.dagPose( n = 'myPose', selection = True, save=True )
+ 
+
+    
+def connectSkeleton():
+    #selecting control skeleton
+    pmc.select(control_root)
+    control_skeleton = pmc.listRelatives(control_root, type = 'joint', ad = True)
+    control_skeleton.append(control_root)
+    
+    for i, each in enumerate(control_skeleton):
+        if (control_skeleton[i].find("End") != -1):
+            control_skeleton.remove(control_skeleton[i])
+
+    
+    length = len(control_skeleton) 
+    
+    #assigning the constraints to the joints 
+    for i in range(0, length):
+        pmc.pointConstraint(control_skeleton[i], control_skeleton[i].replace('control_', 'bind_'), mo = True)
+        pmc.orientConstraint(control_skeleton[i], control_skeleton[i].replace('control_', 'bind_'), mo = True)  
+    
+
+def setupRemoveConnections():
+    pmc.select("bind_*", hi = True)
+    con_joints = pmc.ls(sl=True, type = 'joint')
+    
+    #loop through constrain joints and delete the constraints 
+    for constraints in con_joints:
+        orientConnections = pmc.listConnections(constraints, type = 'orientConstraint')
+        pointConnections = pmc.listConnections(constraints, type = 'pointConstraint')
+        pmc.delete(orientConnections)
+        pmc.delete(pointConnections)
+
+
+
+UI()
+
+
+
+
+    
